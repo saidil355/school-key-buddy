@@ -14,16 +14,240 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          performed_by: string
+          request_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          performed_by: string
+          request_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "borrowing_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      borrowing_requests: {
+        Row: {
+          approval_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          borrower_id: string
+          created_at: string | null
+          end_time: string
+          id: string
+          item_id: string
+          purpose: string
+          requested_at: string | null
+          return_condition: string | null
+          returned_at: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["request_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          borrower_id: string
+          created_at?: string | null
+          end_time: string
+          id?: string
+          item_id: string
+          purpose: string
+          requested_at?: string | null
+          return_condition?: string | null
+          returned_at?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["request_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          borrower_id?: string
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          item_id?: string
+          purpose?: string
+          requested_at?: string | null
+          return_condition?: string | null
+          returned_at?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["request_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrowing_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowing_requests_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowing_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          condition_notes: string | null
+          created_at: string | null
+          id: string
+          name: string
+          room_name: string
+          status: Database["public"]["Enums"]["item_status"] | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          condition_notes?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          room_name: string
+          status?: Database["public"]["Enums"]["item_status"] | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          condition_notes?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          room_name?: string
+          status?: Database["public"]["Enums"]["item_status"] | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          angkatan: number | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          jurusan: Database["public"]["Enums"]["jurusan"] | null
+          kelas: string | null
+          nim_nip: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          angkatan?: number | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          jurusan?: Database["public"]["Enums"]["jurusan"] | null
+          kelas?: string | null
+          nim_nip?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          angkatan?: number | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          jurusan?: Database["public"]["Enums"]["jurusan"] | null
+          kelas?: string | null
+          nim_nip?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "guru" | "siswa"
+      item_status: "tersedia" | "dipinjam" | "overdue" | "rusak"
+      jurusan: "trkj" | "ti" | "trmm"
+      request_status: "pending" | "approved" | "rejected" | "returned"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +374,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "guru", "siswa"],
+      item_status: ["tersedia", "dipinjam", "overdue", "rusak"],
+      jurusan: ["trkj", "ti", "trmm"],
+      request_status: ["pending", "approved", "rejected", "returned"],
+    },
   },
 } as const
