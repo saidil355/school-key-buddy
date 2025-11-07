@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { KeyRound, Plus, Search, Package, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { KeyRound, Projector, Plus, Search, Package, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -137,6 +137,17 @@ const Items = () => {
     setEndTime('');
   };
 
+  const getItemIcon = (type: string) => {
+    switch (type) {
+      case 'kunci':
+        return <KeyRound className="h-5 w-5 text-primary" />;
+      case 'infokus':
+        return <Projector className="h-5 w-5 text-primary" />;
+      default:
+        return <Package className="h-5 w-5 text-primary" />;
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'tersedia':
@@ -226,95 +237,207 @@ const Items = () => {
         </Card>
 
         {/* Items Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {loading ? (
-            <p className="col-span-full text-center text-muted-foreground py-8">Memuat data...</p>
-          ) : filteredItems.length === 0 ? (
-            <p className="col-span-full text-center text-muted-foreground py-8">Tidak ada item ditemukan</p>
-          ) : (
-            filteredItems.map((item) => (
-              <Card key={item.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <KeyRound className="h-5 w-5 text-primary" />
-                      <CardTitle className="text-lg">{item.name}</CardTitle>
-                    </div>
-                    {getStatusIcon(item.status)}
-                  </div>
-                  <CardDescription>{item.room_name}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Tipe:</span>
-                    <Badge variant="outline" className="capitalize">{item.type}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Status:</span>
-                    {getStatusBadge(item.status)}
-                  </div>
-                  {item.condition_notes && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Catatan: {item.condition_notes}
-                    </p>
+        {loading ? (
+          <p className="text-center text-muted-foreground py-8">Memuat data...</p>
+        ) : filteredItems.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">Tidak ada item ditemukan</p>
+        ) : (
+          <div className="space-y-8">
+            {/* Kunci Ruangan Section */}
+            {(filterType === 'all' || filterType === 'kunci') && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-6 w-6 text-primary" />
+                  <h3 className="text-2xl font-semibold">Kunci Ruangan</h3>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredItems.filter(item => item.type === 'kunci').length === 0 ? (
+                    <p className="col-span-full text-center text-muted-foreground py-4">Tidak ada kunci ditemukan</p>
+                  ) : (
+                    filteredItems.filter(item => item.type === 'kunci').map((item) => (
+                      <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-2">
+                              {getItemIcon(item.type)}
+                              <CardTitle className="text-lg">{item.name}</CardTitle>
+                            </div>
+                            {getStatusIcon(item.status)}
+                          </div>
+                          <CardDescription>{item.room_name}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Tipe:</span>
+                            <Badge variant="outline" className="capitalize">{item.type}</Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Status:</span>
+                            {getStatusBadge(item.status)}
+                          </div>
+                          {item.condition_notes && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Catatan: {item.condition_notes}
+                            </p>
+                          )}
+                          {item.status === 'tersedia' && (
+                            <Dialog open={borrowDialogOpen && selectedItem?.id === item.id} onOpenChange={(open) => {
+                              setBorrowDialogOpen(open);
+                              if (open) setSelectedItem(item);
+                            }}>
+                              <DialogTrigger asChild>
+                                <Button className="w-full mt-2">
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  Pinjam
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Pinjam {item.name}</DialogTitle>
+                                  <DialogDescription>
+                                    Isi detail peminjaman untuk {item.room_name}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label>Tujuan Peminjaman</Label>
+                                    <Textarea
+                                      placeholder="Contoh: Kuliah Pemrograman Web"
+                                      value={purpose}
+                                      onChange={(e) => setPurpose(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Waktu Mulai</Label>
+                                    <Input
+                                      type="datetime-local"
+                                      value={startTime}
+                                      onChange={(e) => setStartTime(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Waktu Selesai</Label>
+                                    <Input
+                                      type="datetime-local"
+                                      value={endTime}
+                                      onChange={(e) => setEndTime(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <Button onClick={handleBorrowRequest}>
+                                    Ajukan Peminjaman
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
                   )}
-                  {item.status === 'tersedia' && (
-                    <Dialog open={borrowDialogOpen && selectedItem?.id === item.id} onOpenChange={(open) => {
-                      setBorrowDialogOpen(open);
-                      if (open) setSelectedItem(item);
-                    }}>
-                      <DialogTrigger asChild>
-                        <Button className="w-full mt-2">
-                          <Clock className="mr-2 h-4 w-4" />
-                          Pinjam
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Pinjam {item.name}</DialogTitle>
-                          <DialogDescription>
-                            Isi detail peminjaman untuk {item.room_name}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Tujuan Peminjaman</Label>
-                            <Textarea
-                              placeholder="Contoh: Kuliah Pemrograman Web"
-                              value={purpose}
-                              onChange={(e) => setPurpose(e.target.value)}
-                            />
+                </div>
+              </div>
+            )}
+
+            {/* Infokus Section */}
+            {(filterType === 'all' || filterType === 'infokus') && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Projector className="h-6 w-6 text-primary" />
+                  <h3 className="text-2xl font-semibold">Infokus</h3>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredItems.filter(item => item.type === 'infokus').length === 0 ? (
+                    <p className="col-span-full text-center text-muted-foreground py-4">Tidak ada infokus ditemukan</p>
+                  ) : (
+                    filteredItems.filter(item => item.type === 'infokus').map((item) => (
+                      <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-2">
+                              {getItemIcon(item.type)}
+                              <CardTitle className="text-lg">{item.name}</CardTitle>
+                            </div>
+                            {getStatusIcon(item.status)}
                           </div>
-                          <div className="space-y-2">
-                            <Label>Waktu Mulai</Label>
-                            <Input
-                              type="datetime-local"
-                              value={startTime}
-                              onChange={(e) => setStartTime(e.target.value)}
-                            />
+                          <CardDescription>{item.room_name}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Tipe:</span>
+                            <Badge variant="outline" className="capitalize">{item.type}</Badge>
                           </div>
-                          <div className="space-y-2">
-                            <Label>Waktu Selesai</Label>
-                            <Input
-                              type="datetime-local"
-                              value={endTime}
-                              onChange={(e) => setEndTime(e.target.value)}
-                            />
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Status:</span>
+                            {getStatusBadge(item.status)}
                           </div>
-                        </div>
-                        <DialogFooter>
-                          <Button onClick={handleBorrowRequest}>
-                            Ajukan Peminjaman
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                          {item.condition_notes && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Catatan: {item.condition_notes}
+                            </p>
+                          )}
+                          {item.status === 'tersedia' && (
+                            <Dialog open={borrowDialogOpen && selectedItem?.id === item.id} onOpenChange={(open) => {
+                              setBorrowDialogOpen(open);
+                              if (open) setSelectedItem(item);
+                            }}>
+                              <DialogTrigger asChild>
+                                <Button className="w-full mt-2">
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  Pinjam
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Pinjam {item.name}</DialogTitle>
+                                  <DialogDescription>
+                                    Isi detail peminjaman untuk {item.room_name}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label>Tujuan Peminjaman</Label>
+                                    <Textarea
+                                      placeholder="Contoh: Kuliah Pemrograman Web"
+                                      value={purpose}
+                                      onChange={(e) => setPurpose(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Waktu Mulai</Label>
+                                    <Input
+                                      type="datetime-local"
+                                      value={startTime}
+                                      onChange={(e) => setStartTime(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Waktu Selesai</Label>
+                                    <Input
+                                      type="datetime-local"
+                                      value={endTime}
+                                      onChange={(e) => setEndTime(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <Button onClick={handleBorrowRequest}>
+                                    Ajukan Peminjaman
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
                   )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
